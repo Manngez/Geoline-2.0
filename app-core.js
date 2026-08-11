@@ -33,6 +33,8 @@ const game = {
   peer: null,
   conn: null,
   connected: false,
+  classConnections: [],
+  classroomPaused: false,
   sound: localStorage.getItem('geoline:sound') !== 'off'
 };
 
