@@ -20,7 +20,9 @@ This repository is intentionally independent. It is not linked to, embedded in, 
 2. Student teams choose **Join a Class**, enter a team name and the code, and wait in the lobby.
 3. The teacher starts when at least two teams are connected and displays the shared map for the class.
 4. Teams take turns submitting U.S. places from their own devices.
-5. The teacher can pause, undo the latest move, skip a team, or start a new round.
+5. The teacher controls the classroom from a live dashboard.
+
+Teacher controls include place approval, pause/resume, undo, direct team selection, answer locking, 30/60-second timers, room locking, map labels, state restrictions, automatic or manual scoring, team rename/removal, manual round ending, and a post-round geography summary.
 
 Classrooms support up to eight teams. No accounts are required and rooms exist only while the teacher keeps the host page open.
 
