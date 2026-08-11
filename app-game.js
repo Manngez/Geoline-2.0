@@ -58,15 +58,17 @@ function updateGameUI() {
   els.routeCount.textContent = `${game.route.length} ${game.route.length === 1 ? 'place' : 'places'}`;
   els.routeList.innerHTML = game.route.map((p,i) => `<li><span class="route-index">${String(i+1).padStart(2,'0')}</span><span>${escapeHtml(p.name)}${p.stateCode ? `, ${escapeHtml(p.stateCode)}` : ''}</span><span class="route-player">${escapeHtml(game.players[p.playerIndex]?.name || '')}</span></li>`).join('');
   requestAnimationFrame(() => { els.routeList.scrollTop = els.routeList.scrollHeight; });
-  const isMyTurn = game.mode !== 'online' || game.currentIndex === game.myPlayerIndex;
-  const enabled = !game.finished && isMyTurn && (!game.mode || game.mode !== 'online' || game.connected);
+  const networkMode = game.mode === 'online' || game.mode === 'classroom';
+  const isTeacher = game.mode === 'classroom' && game.onlineRole === 'teacher';
+  const isMyTurn = !networkMode || game.currentIndex === game.myPlayerIndex;
+  const enabled = !game.finished && !game.classroomPaused && !isTeacher && isMyTurn && (!networkMode || game.connected);
   els.cityInput.disabled = !enabled;
   els.submitCityButton.disabled = !enabled;
   els.cityInput.placeholder = enabled ? 'e.g. Austin, TX' : (game.finished ? 'Round finished' : 'Waiting for opponent…');
-  if (game.mode === 'online') {
+  if (networkMode) {
     els.onlineStatus.classList.remove('hidden');
-    els.onlineStatus.textContent = game.connected ? (isMyTurn ? 'Your move' : `Waiting for ${player.name}`) : 'Connection lost';
-    els.mapBadgeText.textContent = game.connected ? 'Online room connected' : 'Reconnecting…';
+    els.onlineStatus.textContent = game.classroomPaused ? 'Game paused by teacher' : (isTeacher ? `Teacher view · ${game.players.length} teams` : (game.connected ? (isMyTurn ? 'Your team’s move' : `Waiting for ${player.name}`) : 'Connection lost'));
+    els.mapBadgeText.textContent = game.classroomPaused ? 'Class paused' : (game.mode === 'classroom' ? `Classroom ${game.roomCode || ''}`.trim() : (game.connected ? 'Online room connected' : 'Reconnecting…'));
   } else {
     els.onlineStatus.classList.add('hidden');
     els.mapBadgeText.textContent = game.mode === 'solo' ? 'Solo practice' : 'Route ready';
@@ -109,6 +111,7 @@ function applyMove(place, playerIndex, {broadcast=true}={}) {
   if (game.route.length === 1) map.setView([place.lat,place.lon],6);
   else fitRoute();
   if (game.mode === 'online' && game.onlineRole === 'host' && broadcast) sendSync();
+  if (game.mode === 'classroom' && game.onlineRole === 'teacher' && broadcast) broadcastClassroom({type:'sync', state:classroomState()});
   if (crossing) showResult();
   return {ok:true, crossing};
 }
@@ -125,13 +128,19 @@ function showResult() {
 }
 
 async function submitResolvedPlace(place) {
-  if (game.mode === 'online' && game.currentIndex !== game.myPlayerIndex) return showToast('Wait for your turn.', 'error');
+  if ((game.mode === 'online' || game.mode === 'classroom') && game.currentIndex !== game.myPlayerIndex) return showToast('Wait for your turn.', 'error');
   if (isDuplicate(place)) return showToast(`${place.name}${place.stateCode ? `, ${place.stateCode}` : ''} was already played.`, 'error');
   els.cityInput.value=''; hideSuggestions();
   if (game.mode === 'online' && game.onlineRole === 'guest') {
     els.submitCityButton.disabled=true;
     sendMessage({type:'moveRequest', place, playerIndex:game.myPlayerIndex});
     showToast('Move sent to host…');
+    return;
+  }
+  if (game.mode === 'classroom' && game.onlineRole === 'team') {
+    els.submitCityButton.disabled=true;
+    sendMessage({type:'classMove', place, playerIndex:game.myPlayerIndex});
+    showToast('Move sent to your teacher…');
     return;
   }
   const result=applyMove(place, game.mode === 'solo' ? 0 : game.currentIndex);
@@ -143,7 +152,7 @@ async function onCitySubmit(event) {
   event.preventDefault();
   const query = els.cityInput.value.trim();
   if (!query || game.finished) return;
-  if (game.mode === 'online' && game.currentIndex !== game.myPlayerIndex) return showToast('Wait for your turn.','error');
+  if ((game.mode === 'online' || game.mode === 'classroom') && game.currentIndex !== game.myPlayerIndex) return showToast('Wait for your turn.','error');
   els.submitCityButton.disabled=true;
   els.submitCityButton.textContent='Finding…';
   try {
