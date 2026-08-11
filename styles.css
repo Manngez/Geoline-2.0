@@ -93,3 +93,13 @@ h3 { letter-spacing: -.025em; }
   h1 { font-size:42px; }.hero-actions { display:grid;grid-template-columns:1fr; }.feature-strip { grid-template-columns:repeat(3,1fr); }.feature-strip strong { font-size:16px; }.feature-strip span { font-size:9px; }.mode-card { min-height:112px;padding:18px; }.mode-icon { width:44px;height:44px; }.player-tools { align-items:flex-start;flex-direction:column; }.section-heading { gap:12px; }.back-button { width:40px;height:40px; }.site-footer span:last-child { display:none; }.search-row { grid-template-columns:1fr; }.search-row .primary-button { width:100%; }.suggestions { top:146px; }.result-actions { flex-direction:column; }.room-code-display { align-items:flex-start;gap:12px;flex-direction:column; }
 }
 .in-game .site-footer { display:none; }
+
+/* Classroom mode */
+.classroom-card { border-color:rgba(89,247,164,.42); background:linear-gradient(145deg,rgba(89,247,164,.11),rgba(84,241,255,.04)); }
+.class-team-list { display:grid;gap:8px; }
+.class-team { display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line); }
+.class-team strong { font-size:13px; }.class-team span { color:var(--green);font-size:11px; }
+.teacher-controls { display:grid;gap:9px;padding:14px;border:1px solid rgba(89,247,164,.28);border-radius:16px;background:rgba(8,37,38,.88); }
+.teacher-controls-head { display:flex;justify-content:space-between;align-items:center;gap:8px; }.teacher-controls-head strong { color:var(--green); }.teacher-controls-head span { font-size:12px;letter-spacing:.12em;color:var(--cyan);font-weight:900; }
+.teacher-control-grid { display:grid;grid-template-columns:1fr 1fr;gap:7px; }.teacher-control-grid button { padding:10px 8px;font-size:11px; }
+.classroom-note { padding:12px;border-radius:12px;background:rgba(84,241,255,.05);color:var(--muted);font-size:11px;line-height:1.5; }
