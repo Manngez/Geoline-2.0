@@ -35,6 +35,19 @@ const game = {
   connected: false,
   classConnections: [],
   classroomPaused: false,
+  classroomSettings: {
+    locked: false,
+    approvalRequired: false,
+    inputOpen: true,
+    showLabels: false,
+    scoringEnabled: true,
+    allowedStates: []
+  },
+  classroomScores: [],
+  classroomPendingMove: null,
+  classroomRoundEnded: null,
+  classroomTimerRemaining: 0,
+  classroomTimerId: null,
   sound: localStorage.getItem('geoline:sound') !== 'off'
 };
 
@@ -126,7 +139,7 @@ function renderMapState() {
   game.route.forEach((place, idx) => {
     const color = PLAYER_COLORS[place.playerIndex % PLAYER_COLORS.length];
     const marker = L.marker([place.lat, place.lon], {icon: markerIcon(color)}).addTo(map);
-    marker.bindTooltip(`${escapeHtml(place.name)}, ${escapeHtml(place.stateCode || place.state || '')}`, {direction:'top', className:'city-label', offset:[0,-8]});
+    marker.bindTooltip(`${escapeHtml(place.name)}, ${escapeHtml(place.stateCode || place.state || '')}`, {direction:'top', className:'city-label', offset:[0,-8], permanent:game.mode==='classroom' && !!game.classroomSettings?.showLabels});
     mapLayers.push(marker);
     if (idx > 0) {
       const prev = game.route[idx-1];
