@@ -34,15 +34,17 @@ function updatePlayerTools() { const n=els.playerInputs.children.length; els.pla
 function getLocalPlayers() { return [...els.playerInputs.querySelectorAll('input')].map((input,i)=>({name:input.value.trim() || `Player ${i+1}`})); }
 
 function destroyOnline() {
+  (game.classConnections || []).forEach(item => { try { (item.conn || item).close(); } catch {} });
   try { game.conn?.close(); } catch {}
   try { game.peer?.destroy(); } catch {}
-  game.peer=null;game.conn=null;game.connected=false;game.onlineRole=null;game.myPlayerIndex=null;game.roomCode=null;
+  game.peer=null;game.conn=null;game.connected=false;game.onlineRole=null;game.myPlayerIndex=null;game.roomCode=null;game.classConnections=[];game.classroomPaused=false;
+  $('teacherControls')?.remove();
 }
 function sendMessage(payload) { if (game.conn?.open) { try { game.conn.send(payload); } catch {} } }
-function publicState() { return {players:game.players,currentIndex:game.currentIndex,route:game.route,finished:game.finished,resultPayload}; }
+function publicState() { return {players:game.players,currentIndex:game.currentIndex,route:game.route,finished:game.finished,classroomPaused:game.classroomPaused,resultPayload}; }
 function sendSync() { sendMessage({type:'sync', state:publicState()}); }
 function consumeState(s) {
-  game.players=s.players||game.players; game.currentIndex=s.currentIndex||0; game.route=s.route||[]; game.finished=!!s.finished; resultPayload=s.resultPayload||null;
+  game.players=s.players||game.players; game.currentIndex=s.currentIndex||0; game.route=s.route||[]; game.finished=!!s.finished; game.classroomPaused=!!s.classroomPaused; resultPayload=s.resultPayload||null;
   renderMapState(); updateGameUI(); if (game.route.length) fitRoute();
   if (game.finished && resultPayload) showResult(); else els.resultModal.classList.add('hidden');
 }
@@ -113,7 +115,13 @@ function joinOnlineRoom() {
   peer.on('error',err=>{ console.error(err); $('joinRoomButton').disabled=false; $('joinConnectionStatus').textContent='Could not connect'; showToast('Could not join that room. Check the code and try again.','error',5000); });
 }
 
-function openOnline(mode) { showScreen('online'); if(mode==='host') renderHostForm(); else renderJoinForm(); }
+function openOnline(mode) {
+  showScreen('online');
+  if(mode==='host') renderHostForm();
+  else if(mode==='classroom-host') renderClassroomHostForm();
+  else if(mode==='classroom-join') renderClassroomJoinForm();
+  else renderJoinForm();
+}
 
 function bindEvents() {
   document.querySelectorAll('[data-screen]').forEach(btn=>btn.addEventListener('click',()=>showScreen(btn.dataset.screen)));
@@ -135,7 +143,10 @@ function bindEvents() {
   els.placeModal.addEventListener('click',e=>{if(e.target===els.placeModal)closePlaceChooser();});
   els.playAgainButton.addEventListener('click',()=>{
     if(game.mode==='online' && game.onlineRole==='guest'){ sendMessage({type:'resetRequest'}); els.resultModal.classList.add('hidden'); return; }
-    resetGameState(true); if(game.mode==='online' && game.onlineRole==='host') sendMessage({type:'reset',state:publicState()});
+    if(game.mode==='classroom' && game.onlineRole==='team'){ showToast('Waiting for the teacher to start a new round.'); return; }
+    resetGameState(true);
+    if(game.mode==='online' && game.onlineRole==='host') sendMessage({type:'reset',state:publicState()});
+    if(game.mode==='classroom' && game.onlineRole==='teacher') broadcastClassroom({type:'classReset',state:classroomState()});
   });
   els.resultHomeButton.addEventListener('click',()=>{ els.resultModal.classList.add('hidden'); destroyOnline(); resetGameState(false); showScreen('home'); });
   els.soundToggle.addEventListener('click',()=>{ game.sound=!game.sound; localStorage.setItem('geoline:sound',game.sound?'on':'off');updateSoundButton();tone('move'); });
