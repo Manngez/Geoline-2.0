@@ -61,13 +61,15 @@ function updateGameUI() {
   const networkMode = game.mode === 'online' || game.mode === 'classroom';
   const isTeacher = game.mode === 'classroom' && game.onlineRole === 'teacher';
   const isMyTurn = !networkMode || game.currentIndex === game.myPlayerIndex;
-  const enabled = !game.finished && !game.classroomPaused && !isTeacher && isMyTurn && (!networkMode || game.connected);
+  const classInputOpen = game.mode !== 'classroom' || game.classroomSettings?.inputOpen !== false;
+  const enabled = !game.finished && !game.classroomPaused && classInputOpen && !isTeacher && isMyTurn && (!networkMode || game.connected);
   els.cityInput.disabled = !enabled;
   els.submitCityButton.disabled = !enabled;
   els.cityInput.placeholder = enabled ? 'e.g. Austin, TX' : (game.finished ? 'Round finished' : 'Waiting for opponent…');
   if (networkMode) {
     els.onlineStatus.classList.remove('hidden');
-    els.onlineStatus.textContent = game.classroomPaused ? 'Game paused by teacher' : (isTeacher ? `Teacher view · ${game.players.length} teams` : (game.connected ? (isMyTurn ? 'Your team’s move' : `Waiting for ${player.name}`) : 'Connection lost'));
+    const timerText = game.mode === 'classroom' && game.classroomTimerRemaining > 0 ? ` · ${game.classroomTimerRemaining}s` : '';
+    els.onlineStatus.textContent = game.classroomPaused ? 'Game paused by teacher' : (!classInputOpen ? 'Answers locked by teacher' : (isTeacher ? `Teacher view · ${game.players.length} teams${timerText}` : (game.connected ? (isMyTurn ? `Your team’s move${timerText}` : `Waiting for ${player.name}${timerText}`) : 'Connection lost')));
     els.mapBadgeText.textContent = game.classroomPaused ? 'Class paused' : (game.mode === 'classroom' ? `Classroom ${game.roomCode || ''}`.trim() : (game.connected ? 'Online room connected' : 'Reconnecting…'));
   } else {
     els.onlineStatus.classList.add('hidden');
