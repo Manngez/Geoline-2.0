@@ -7,4 +7,5 @@ document.write('<script src="app-map.js"><\/script>');
 document.write('<script src="app-game.js"><\/script>');
 document.write('<script src="settlement-filter.js"><\/script>');
 document.write('<script src="app-online.js"><\/script>');
+document.write('<script src="app-classroom.js"><\/script>');
 document.write('<script src="game-ui.js"><\/script>');
