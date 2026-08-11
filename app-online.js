@@ -34,19 +34,24 @@ function updatePlayerTools() { const n=els.playerInputs.children.length; els.pla
 function getLocalPlayers() { return [...els.playerInputs.querySelectorAll('input')].map((input,i)=>({name:input.value.trim() || `Player ${i+1}`})); }
 
 function destroyOnline() {
+  if (game.classroomTimerId) clearInterval(game.classroomTimerId);
   (game.classConnections || []).forEach(item => { try { (item.conn || item).close(); } catch {} });
   try { game.conn?.close(); } catch {}
   try { game.peer?.destroy(); } catch {}
-  game.peer=null;game.conn=null;game.connected=false;game.onlineRole=null;game.myPlayerIndex=null;game.roomCode=null;game.classConnections=[];game.classroomPaused=false;
+  game.peer=null;game.conn=null;game.connected=false;game.onlineRole=null;game.myPlayerIndex=null;game.roomCode=null;game.classConnections=[];game.classroomPaused=false;game.classroomPendingMove=null;game.classroomRoundEnded=null;game.classroomTimerRemaining=0;game.classroomTimerId=null;
   $('teacherControls')?.remove();
 }
 function sendMessage(payload) { if (game.conn?.open) { try { game.conn.send(payload); } catch {} } }
 function publicState() { return {players:game.players,currentIndex:game.currentIndex,route:game.route,finished:game.finished,classroomPaused:game.classroomPaused,resultPayload}; }
 function sendSync() { sendMessage({type:'sync', state:publicState()}); }
 function consumeState(s) {
-  game.players=s.players||game.players; game.currentIndex=s.currentIndex||0; game.route=s.route||[]; game.finished=!!s.finished; game.classroomPaused=!!s.classroomPaused; resultPayload=s.resultPayload||null;
+  game.players=s.players||game.players; game.currentIndex=s.currentIndex||0; game.route=s.route||[]; game.finished=!!s.finished; game.classroomPaused=!!s.classroomPaused;
+  if (s.classroomSettings) game.classroomSettings={...game.classroomSettings,...s.classroomSettings};
+  if (s.classroomScores) game.classroomScores=s.classroomScores;
+  game.classroomRoundEnded=s.classroomRoundEnded||null; game.classroomTimerRemaining=Number(s.classroomTimerRemaining)||0; resultPayload=s.resultPayload||null;
   renderMapState(); updateGameUI(); if (game.route.length) fitRoute();
-  if (game.finished && resultPayload) showResult(); else els.resultModal.classList.add('hidden');
+  if (game.classroomRoundEnded && typeof showClassroomRoundSummary==='function') showClassroomRoundSummary(game.classroomRoundEnded);
+  else if (game.finished && resultPayload) showResult(); else els.resultModal.classList.add('hidden');
 }
 function wireConnection(conn, role) {
   game.conn=conn;
@@ -144,6 +149,7 @@ function bindEvents() {
   els.playAgainButton.addEventListener('click',()=>{
     if(game.mode==='online' && game.onlineRole==='guest'){ sendMessage({type:'resetRequest'}); els.resultModal.classList.add('hidden'); return; }
     if(game.mode==='classroom' && game.onlineRole==='team'){ showToast('Waiting for the teacher to start a new round.'); return; }
+    if(game.mode==='classroom' && game.onlineRole==='teacher'){ startNewClassroomRound(); return; }
     resetGameState(true);
     if(game.mode==='online' && game.onlineRole==='host') sendMessage({type:'reset',state:publicState()});
     if(game.mode==='classroom' && game.onlineRole==='teacher') broadcastClassroom({type:'classReset',state:classroomState()});
