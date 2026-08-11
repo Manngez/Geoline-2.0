@@ -12,6 +12,17 @@ This repository is intentionally independent. It is not linked to, embedded in, 
 - **Host Online Game** — 1v1 peer-to-peer room using a temporary six-character code.
 - **Join Online Game** — join the host's room with the code.
 - **Solo Practice** — build a route and see how long you can avoid a crossing.
+- **Classroom Mode** — a teacher hosts a shared game for 2–8 student teams.
+
+## Classroom mode
+
+1. The teacher chooses **Classroom Mode** and creates a temporary six-character class code.
+2. Student teams choose **Join a Class**, enter a team name and the code, and wait in the lobby.
+3. The teacher starts when at least two teams are connected and displays the shared map for the class.
+4. Teams take turns submitting U.S. places from their own devices.
+5. The teacher can pause, undo the latest move, skip a team, or start a new round.
+
+Classrooms support up to eight teams. No accounts are required and rooms exist only while the teacher keeps the host page open.
 
 ## How it works
 
