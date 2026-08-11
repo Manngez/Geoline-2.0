@@ -73,6 +73,8 @@
   pointer-events: auto;
   box-shadow: 0 14px 38px rgba(0,0,0,.3);
   backdrop-filter: blur(16px);
+  max-height: calc(100dvh - 92px);
+  overflow-y: auto;
 }
 
 .game-status-card .eyebrow { display: none; }
